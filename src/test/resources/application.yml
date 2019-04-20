@@ -1,0 +1,30 @@
+spring:
+  profiles:
+    active: test
+  jpa:
+    database: mysql
+    properties.hibernate.dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    properties:
+      hibernate.format_sql: true
+    generate-ddl: false
+  datasource:
+#    data: classpath:data-h2.sql # 시작할때 실행시킬 script
+    url: jdbc:mysql://localhost:3306/batch?useSSL=false
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    platform: mysql
+    initialization-mode: ALWAYS
+  batch:
+    initialize-schema: never
+
+logging:
+  level:
+    ROOT: info
+
+
+# 데이터들이 좀 들어가있으면 좋겠음
+#
