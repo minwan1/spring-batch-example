@@ -19,7 +19,7 @@ spring:
     platform: mysql
     initialization-mode: ALWAYS
   batch:
-    initialize-schema: never
+    initialize-schema: always
 
 logging:
   level:
