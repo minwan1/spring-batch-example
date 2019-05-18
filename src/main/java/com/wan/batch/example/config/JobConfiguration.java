@@ -15,11 +15,16 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Configuration
@@ -27,6 +32,7 @@ import java.util.List;
 public class JobConfiguration {
 
     private final MemberRepository memberRepository;
+    private final EntityManagerFactory entityManagerFactory;
     private final int CHUNK_SIZE = 10;
 
     @Bean
@@ -47,13 +53,29 @@ public class JobConfiguration {
                 .build();
     }
 
-    @Bean
+
+    @Bean(destroyMethod = "")
     @StepScope
-    public QueueItemReader<Member> completeMemberReader() {
-        List<Member> oldMembers =
-                memberRepository.findByCreatedAtBeforeAndProcessStatusEquals(
-                        LocalDateTime.now().minusDays(1), ProcessStatus.WAITING);
-        return new QueueItemReader<>(oldMembers);  // 전체를 다읽어옴
+    public JpaPagingItemReader<Member> completeMemberReader(){
+        JpaPagingItemReader<Member> jpaPagingItemReader =
+                new JpaPagingItemReader(){
+                    @Override
+                    public int getPage() {
+                        return 0;
+                    }
+                };
+
+        jpaPagingItemReader.setQueryString("select m from Member as m where m" +
+                ".createdAt < :createdAt and m.processStatus = :processStatus");
+
+        Map<String, Object> map = new HashMap<>();
+        LocalDateTime now = LocalDateTime.now();
+        map.put("createdAt", now.minusYears(1));
+        map.put("processStatus", ProcessStatus.WAITING);
+        jpaPagingItemReader.setParameterValues(map);
+        jpaPagingItemReader.setEntityManagerFactory(entityManagerFactory);
+        jpaPagingItemReader.setPageSize(CHUNK_SIZE);
+        return jpaPagingItemReader;
     }
 
     public ItemProcessor<Member, Member> completeUserProcessor() {
