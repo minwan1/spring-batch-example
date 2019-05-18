@@ -24,7 +24,3 @@ spring:
 logging:
   level:
     ROOT: info
-
-
-# 데이터들이 좀 들어가있으면 좋겠음
-#
